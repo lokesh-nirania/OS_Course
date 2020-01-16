@@ -207,7 +207,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   			rmp->mp_pid = get_free_pid();
 			rmp->mp_flags |= IN_USE | PRIV_PROC;
 
-			printf("Minix: PID %d created\n",rmp->mp_pid);
 
 			/* RS schedules this process */
 			rmp->mp_scheduler = NONE;
@@ -225,6 +224,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 		mess.VFS_PM_ENDPT = rmp->mp_endpoint;
   		if (OK != (s=ipc_send(VFS_PROC_NR, &mess)))
 			panic("can't sync up with VFS: %d", s);
+		printf("Minix: PID %d created\n",rmp->mp_pid);
   	}
   }
 
