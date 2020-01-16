@@ -158,6 +158,7 @@ void exec_restart(struct mproc *rmp, int result, vir_bytes pc, vir_bytes sp,
 		if (rmp->mp_flags & PARTIAL_EXEC)
 		{
 			/* Use SIGKILL to signal that something went wrong */
+			printf("Minix: PID %d is exited\n",rmp->mp_pid);
 			sys_kill(rmp->mp_endpoint, SIGKILL);
 			return;
 		}
