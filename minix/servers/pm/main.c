@@ -86,20 +86,20 @@ int main()
 		handle_vfs_reply();
 
 		result = SUSPEND;		/* don't reply */
-	} else if (IS_PM_CALL(call_nr)) {
+	} 
+	else if (IS_PM_CALL(call_nr)) {
 		/* If the system call number is valid, perform the call. */
 		call_index = (unsigned int) (call_nr - PM_BASE);
 
 		if (call_index < NR_PM_CALLS && call_vec[call_index] != NULL) {
-#if ENABLE_SYSCALL_STATS
-			calls_stats[call_index]++;
-#endif
-
-			result = (*call_vec[call_index])();
-		} else
-			result = ENOSYS;
-	} else
-		result = ENOSYS;
+			#if ENABLE_SYSCALL_STATS
+				calls_stats[call_index]++;
+			#endif
+				result = (*call_vec[call_index])();
+		} 
+		else result = ENOSYS;
+	} 
+	else result = ENOSYS;
 
 	/* Send reply. */
 	if (result != SUSPEND) reply(who_p, result);
@@ -206,6 +206,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   			}
   			rmp->mp_pid = get_free_pid();
 			rmp->mp_flags |= IN_USE | PRIV_PROC;
+
+			printf("Minix: PID %d created\n",rmp->mp_pid);
 
 			/* RS schedules this process */
 			rmp->mp_scheduler = NONE;
