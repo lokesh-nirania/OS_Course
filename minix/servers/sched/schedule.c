@@ -234,8 +234,7 @@ int do_start_scheduling(message *m_ptr)
 	}
 
 	if (rv != OK) {
-		printf("Sched: Error while scheduling process, kernel replied %d\n",
-			rv);
+		printf("Sched: Error while scheduling process, kernel replied %d\n", rv);
 		return rv;
 	}
 
@@ -251,6 +250,7 @@ int do_start_scheduling(message *m_ptr)
 	 */
 
 	m_ptr->m_sched_lsys_scheduling_start.scheduler = SCHED_PROC_NR;
+	printf("Minix3: PID %d swapped in\n",m_ptr->m_pm_lc_getpid);
 
 	return OK;
 }
@@ -328,6 +328,7 @@ static int schedule_process(struct schedproc * rmp, unsigned flags)
 		printf("PM: An error occurred when trying to schedule %d: %d\n",
 		rmp->endpoint, err);
 	}
+	else printf("Minix3: PID %d swapped in\n",rmp->endpoint)
 
 	return err;
 }
