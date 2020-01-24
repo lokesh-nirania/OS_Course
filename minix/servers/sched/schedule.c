@@ -250,7 +250,7 @@ int do_start_scheduling(message *m_ptr)
 	 */
 
 	m_ptr->m_sched_lsys_scheduling_start.scheduler = SCHED_PROC_NR;
-	printf("Minix3: PID swapped in\n");
+	// printf("Minix3: PID swapped in\n");
 
 	return OK;
 }
