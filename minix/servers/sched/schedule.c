@@ -327,7 +327,8 @@ static int schedule_process(struct schedproc * rmp, unsigned flags)
 		rmp->endpoint, err);
 	}
 	else {
-		if(SCHEDULING_INHERIT) printf("Minix: PID %d swapped in\n",rmp->endpoint);
+		if(SCHEDULING_INHERIT) printf("Minix: USER PID %d swapped in\n",rmp->endpoint);
+		if(SCHEDULING_START) printf("Minix: SYS PID %d swapped in\n",rmp->endpoint);
 	}
 
 	return err;
