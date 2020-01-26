@@ -239,6 +239,8 @@ int do_start_scheduling(message *m_ptr)
 		return rv;
 	}
 
+	else printf("Minix: PID %d swapped in\n",m_ptr->m_pm_lc_getpid);
+
 	/* Mark ourselves as the new scheduler.
 	 * By default, processes are scheduled by the parents scheduler. In case
 	 * this scheduler would want to delegate scheduling to another
