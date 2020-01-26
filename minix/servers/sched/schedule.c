@@ -330,6 +330,7 @@ static int schedule_process(struct schedproc * rmp, unsigned flags)
 	if(rmp->priority > 6) {
 		if(rmp->max_priority == 7) printf("Minix: PID %d swapped in\n",_ENDPOINT_P(rmp->endpoint));
 	}
+	else printf("System: PID %d swapped in\n",_ENDPOINT_P(rmp->endpoint));
 
 	return err;
 }
