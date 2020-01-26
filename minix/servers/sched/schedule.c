@@ -239,7 +239,7 @@ int do_start_scheduling(message *m_ptr)
 		return rv;
 	}
 
-	else printf("Minix: PID %d swapped in\n",m_ptr->m_pm_lc_getpid.parent_pid);
+	// else printf("Minix: PID %d swapped in\n",m_ptr->m_pm_lc_getpid.parent_pid);
 
 	/* Mark ourselves as the new scheduler.
 	 * By default, processes are scheduled by the parents scheduler. In case
@@ -326,7 +326,9 @@ static int schedule_process(struct schedproc * rmp, unsigned flags)
 		printf("PM: An error occurred when trying to schedule %d: %d\n",
 		rmp->endpoint, err);
 	}
-	else printf("Minix: PID %d swapped in\n",rmp->endpoint);
+	else {
+		if(SCHEDULING_INHERIT) printf("Minix: PID %d swapped in\n",rmp->endpoint);
+	}
 
 	return err;
 }
