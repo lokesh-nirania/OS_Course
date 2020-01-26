@@ -13,6 +13,7 @@
 #include <minix/com.h>
 #include <machine/archtypes.h>
 #include "kernel/proc.h" /* for queue constants */
+#include "include/minix/endpoint.h"
 
 static minix_timer_t sched_timer;
 static unsigned balance_timeout;
@@ -326,9 +327,8 @@ static int schedule_process(struct schedproc * rmp, unsigned flags)
 		printf("PM: An error occurred when trying to schedule %d: %d\n",
 		rmp->endpoint, err);
 	}
-	else {
-		if(SCHEDULING_INHERIT) printf("Minix: USER PID %d swapped in\n",rmp->endpoint);
-		if(SCHEDULING_START) printf("Minix: SYS PID %d swapped in\n",rmp->endpoint);
+	if(rmp->priority > 6) {
+		if(rmp->max_priority == 7) printf("Minix: PID %d swapped in\n",_ENDPOINT_P(rmp->endpoint));
 	}
 
 	return err;
