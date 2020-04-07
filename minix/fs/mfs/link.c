@@ -537,8 +537,15 @@ off_t newsize;			/* inode must become this size */
 
   /* Free the actual space if truncating. */
   if (newsize < rip->i_size) {
-  	if ((r = freesp_inode(rip, newsize, rip->i_size)) != OK)
+    if((rip->i_mode & I_TYPE) == I_IMMEDIATE) {
+      /* do nothing; this leaves the data, but since the size of the
+         file will be updated to the smaller length, that's fine */
+      // printf("Delete immediate file\n");
+    }
+  	else if ((r = freesp_inode(rip, newsize, rip->i_size)) != OK)
   		return(r);
+    
+    if(newsize == 0) rip->i_mode = I_IMMEDIATE | (rip->i_mode & ALL_MODES);
   }
 
   /* Clear the rest of the last zone if expanding. */
