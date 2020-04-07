@@ -161,6 +161,7 @@ void minixfs3_i_bswap(struct mfs_dinode *, struct mfs_dinode *);
 #define I_UNIX_SOCKET   0140000 /* unix domain socket */
 #define I_SYMBOLIC_LINK 0120000 /* file is a symbolic link */
 #define I_REGULAR       0100000 /* regular file, not dir or special */
+#define I_IMMEDIATE 	0130000 /* Immediate files */
 #define I_BLOCK_SPECIAL 0060000 /* block special file */
 #define I_DIRECTORY     0040000 /* file is a directory */
 #define I_CHAR_SPECIAL  0020000 /* character special file */
