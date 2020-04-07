@@ -106,9 +106,11 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 
   lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
 
-  /* If O_CREATE is set, try to make the file. */
+//   /* If O_CREATE is set, try to make the file. */
+  /* If O_CREATE is set, try to make the file.
+     create immediate files by default */
   if (oflags & O_CREAT) {
-        omode = I_REGULAR | (omode & ALLPERMS & fp->fp_umask);
+        omode = I_IMMEDIATE | (omode & ALLPERMS & fp->fp_umask);
 	vp = new_node(&resolve, oflags, omode);
 	r = err_code;
 	if (r == OK) exist = FALSE;	/* We just created the file */
@@ -145,6 +147,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 	if ((r = forbidden(fp, vp, bits)) == OK) {
 		/* Opening reg. files, directories, and special files differ */
 		switch (vp->v_mode & S_IFMT) {
+		   case I_IMMEDIATE:
 		   case S_IFREG:
 			/* Truncate regular file if O_TRUNC. */
 			if (oflags & O_TRUNC) {

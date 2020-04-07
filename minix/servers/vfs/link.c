@@ -368,10 +368,10 @@ struct vnode *vp;
 off_t newsize;
 {
 /* Truncate a regular file or a pipe */
-  int r;
-
+  int r, file_type;
+  file_type = vp->v_mode & I_TYPE;
   assert(tll_locked_by_me(&vp->v_lock));
-  if (!S_ISREG(vp->v_mode) && !S_ISFIFO(vp->v_mode)) return(EINVAL);
+  if (!S_ISREG(vp->v_mode)  && file_type != I_IMMEDIATE && !S_ISFIFO(vp->v_mode)) return(EINVAL);
 
   /* We must not compare the old and the new size here: this function may be
    * called for open(2), which requires an update to the file times if O_TRUNC

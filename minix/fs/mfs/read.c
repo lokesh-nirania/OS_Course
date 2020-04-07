@@ -18,7 +18,8 @@ static struct buf *rahead(struct inode *rip, block_t baseblock, u64_t
 static int rw_chunk(struct inode *rip, u64_t position, unsigned off,
 	size_t chunk, unsigned left, int rw_flag, cp_grant_id_t gid, unsigned
 	buf_off, unsigned int block_size, int *completed);
-
+static int rw_immed(struct inode *rip, unsigned off,
+  size_t chunk, int rw_flag, cp_grant_id_t gid, unsigned buf_off);
 
 /*===========================================================================*
  *				fs_readwrite				     *
@@ -42,7 +43,7 @@ int fs_readwrite(void)
 	return(EINVAL);
 
   mode_word = rip->i_mode & I_TYPE;
-  regular = (mode_word == I_REGULAR || mode_word == I_NAMED_PIPE);
+  regular = (mode_word == I_REGULAR || mode_word == I_IMMEDIATE || mode_word == I_NAMED_PIPE);
   block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0);
   
   /* Determine blocksize */
@@ -89,6 +90,86 @@ int fs_readwrite(void)
 		return EROFS;
 	      
   cum_io = 0;
+
+  	if((rip->i_mode & I_TYPE) == I_IMMEDIATE)
+	{
+    int sanity = 0;
+    if(f_size > 40) printf("Immediate file is larger than 40 bytes!\n");
+    
+    if(rw_flag == WRITING)
+    {  
+      /* printf("fs_readwrite() WRITING to immediate file\n"); */
+        
+      /* is the file going to need to be upconverted from immediate to regular? */
+      if((f_size + nrbytes) > 40)
+      {
+        char tmp[40];
+        register int i;
+        register struct buf *bp;
+        
+        for(i = 0; i < f_size; i++)
+        {
+          tmp[i] = *(((char *)rip->i_zone) + i);
+        }
+        
+        /* clear inode since it will now hold pointers rather than data (copied from wipe_inode()) */
+        rip->i_size = 0;
+        rip->i_update = ATIME | CTIME | MTIME;	/* update all times later */
+        rip->i_dirt = IN_DIRTY;
+        for (i = 0; i < V2_NR_TZONES; i++) rip->i_zone[i] = NO_ZONE;
+        
+        /* Writing to a nonexistent block. Create and enter in inode.*/
+    		if ((bp = new_block(rip, (off_t) 0)) == NULL)
+    			panic("bp not valid in fs_readwrite immediate growth; this can't be happening!");
+    		
+    		/* copy data to bp->data */
+    		for(i = 0; i < f_size; i++)
+        {
+          b_data(bp)[i] = tmp[i];
+          // bp->b_data[i] = tmp[i];
+        }
+    		// lmfs_markdirty(bp);
+        bp->b_dirt = IN_DIRTY;
+    		
+        put_block(bp, PARTIAL_DATA_BLOCK);	
+    		
+        position += f_size;
+        f_size = rip->i_size;
+        rip->i_mode = (I_REGULAR | (rip->i_mode & ALL_MODES));
+      }
+      /* the file will not grow over 40 bytes */
+      else
+      {
+        sanity = 1;
+      }
+    }
+    else
+    {
+      /* printf("fs_readwrite() READING from immediate file\n"); */
+      
+      bytes_left = f_size - position;
+      /* if the position is past the end of the file, it is already too late... */
+      if(bytes_left > 0)
+      {
+        sanity = 1;
+        /* don't read past the EOF, just right up to it */
+        if(nrbytes > bytes_left) nrbytes = bytes_left;
+      }
+    }
+    
+    if(sanity)
+    {
+      r = rw_immed(rip, position, nrbytes, rw_flag, gid, cum_io);
+      if(r == OK)
+      {
+        cum_io += nrbytes;
+        position += nrbytes;
+        /* no more bytes left to read */
+        nrbytes = 0;
+      }
+    }
+}
+
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes > 0) {
 	  off = ((unsigned int) position) % block_size; /* offset in blk*/
@@ -321,6 +402,33 @@ int *completed;			/* number of bytes copied */
   return(r);
 }
 
+/*===========================================================================*
+ *				rw_immed				     *
+ *===========================================================================*/
+int rw_immed(rip, off, chunk, rw_flag, gid, buf_off)
+register struct inode *rip;	/* pointer to inode for file to be rd/wr */
+unsigned off;			/* off within the current block */
+unsigned int chunk;		/* number of bytes to read or write */
+int rw_flag;			/* READING or WRITING */
+cp_grant_id_t gid;		/* grant */
+unsigned buf_off;		/* offset in grant */
+{
+  int r = OK;
+  
+  if(rw_flag == READING)
+  {
+    r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off,
+           (vir_bytes) (rip->i_zone+off), (size_t) chunk);
+  }
+  else
+  {
+    r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off,
+             (vir_bytes) (rip->i_zone+off), (size_t) chunk);
+    rip->i_dirt = IN_DIRTY;
+  }
+  
+  return(r);
+}
 
 /*===========================================================================*
  *				read_map				     *
@@ -342,6 +450,8 @@ int opportunistic;		/* if nonzero, only use cache for metadata */
   unsigned long excess, zone, block_pos;
   int iomode = NORMAL;
 
+  if((rip->i_mode & I_TYPE) == I_IMMEDIATE)
+    return(NO_BLOCK);
   if(opportunistic) iomode = PREFETCH;
 
   scale = rip->i_sp->s_log_zone_size;	/* for block-zone conversion */
